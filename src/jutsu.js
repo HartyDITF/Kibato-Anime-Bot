@@ -31,6 +31,22 @@ cheerio.load(html);
 const links=[];
 
 
+console.log("Проверяем ссылки");
+
+
+$(".grid-items a")
+.slice(0,30)
+.each((i,el)=>{
+
+    console.log(
+        i,
+        $(el).attr("href"),
+        $(el).text().trim()
+    );
+
+});
+
+
 $(".grid-items a")
 .each(
 (_,el)=>{
