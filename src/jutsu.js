@@ -113,7 +113,11 @@ item
 .first()
 .attr("src");
 
-
+console.log(
+"КАРТОЧКА:",
+title,
+link
+);
 
 if(
 title &&
