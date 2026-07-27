@@ -309,18 +309,22 @@ return await response.text();
 
 function fixUrl(url){
 
-
 if(!url)
 return null;
 
 
 if(
 url.startsWith("http")
-)
+){
+
 return url;
 
+}
 
 
-return BASE + url;
+return BASE + "/" + url.replace(
+/^\//,
+""
+);
 
 }
