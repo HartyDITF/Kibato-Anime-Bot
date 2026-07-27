@@ -78,7 +78,7 @@ const episodes=[];
 
 
 
-$(".shortstory, .anime-card, .item, article, .card")
+$(".jutsu-sect__content .grid-item, .grid-items > div")
 .each(
 (_,el)=>{
 
