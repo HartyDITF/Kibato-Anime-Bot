@@ -39,7 +39,14 @@ export async function getNewEpisodes() {
 
 
     const html =
-        await response.text();
+    await response.text();
+
+console.log(
+    html.substring(0, 1000)
+);
+
+const $ =
+    cheerio.load(html);
 
 
 
