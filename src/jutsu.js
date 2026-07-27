@@ -51,6 +51,21 @@ const $ =
 cheerio.load(html);
 
 
+console.log(
+"Первые div:"
+);
+
+
+$("div").slice(0,30).each((i,el)=>{
+
+    console.log(
+        i,
+        $(el).attr("class")
+    );
+
+});
+
+
 
 console.log(
 "Ссылок:",
