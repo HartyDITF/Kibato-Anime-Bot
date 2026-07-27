@@ -142,7 +142,7 @@ cheerio.load(html);
 
 
 const title =
-$("h1")
+$("h1, .anime-title")
 .first()
 .text()
 .trim();
@@ -193,10 +193,7 @@ fixUrl(image),
 
 
 description:
-text.substring(
-0,
-300
-)
+`Новая серия доступна на JUT-SU`
 
 
 };
