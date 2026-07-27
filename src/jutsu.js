@@ -1,297 +1,258 @@
 import * as cheerio from "cheerio";
 
 
-const JUTSU_URL = "https://jut-su.net/";
+const JUTSU_URL =
+"https://jut-su.net/anime/";
 
 
 
-export async function getNewEpisodes() {
-
-    console.log(
-        "🔎 Проверяем jut-su.net..."
-    );
+export async function getNewEpisodes(){
 
 
-    const response =
-        await fetch(
-            JUTSU_URL,
-            {
-                headers: {
-
-                    "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-
-                    "Accept":
-                    "text/html,application/xhtml+xml"
-
-                }
-            }
-        );
+console.log(
+"🔎 Открываем:",
+JUTSU_URL
+);
 
 
-    if (!response.ok) {
 
-        throw new Error(
-            `Jut-su ошибка: ${response.status}`
-        );
+const response =
+await fetch(
+JUTSU_URL,
+{
+headers:{
+"User-Agent":
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 Safari/537.36",
 
-    }
+"Accept":
+"text/html"
+}
+}
+);
+
+
+
+if(!response.ok){
+
+throw new Error(
+`Jut-su ошибка: ${response.status}`
+);
+
+}
+
 
 
 const html =
-    await response.text();
+await response.text();
 
-
-console.log(
-    html.substring(0, 1000)
-);
 
 
 const $ =
-    cheerio.load(html);
+cheerio.load(html);
+
 
 
 console.log(
-    "Ссылок найдено:",
-    $("a").length
+"Ссылок:",
+$("a").length
 );
 
 
-$("a").slice(0,20).each((i,el)=>{
 
-    console.log(
-        i,
-        $(el).text().trim(),
-        $(el).attr("href")
-    );
+const episodes=[];
+
+
+
+$(".shortstory, .anime-card, .item, article, .card")
+.each(
+(_,el)=>{
+
+
+const item =
+$(el);
+
+
+
+const title =
+item
+.find(
+"h2,h3,.title,.name"
+)
+.first()
+.text()
+.trim();
+
+
+
+const link =
+item
+.find("a")
+.first()
+.attr("href");
+
+
+
+const image =
+item
+.find("img")
+.first()
+.attr("src");
+
+
+
+if(
+title &&
+link
+){
+
+episodes.push({
+
+title,
+
+episode:
+findEpisode(
+item.text()
+),
+
+voice:
+findVoice(
+item.text()
+),
+
+url:
+absoluteUrl(
+link
+),
+
+image:
+absoluteUrl(
+image
+),
+
+description:
+item.text()
+.trim()
+.substring(
+0,
+300
+)
 
 });
 
-    const episodes = [];
+
+}
+
+
+}
+);
 
 
 
-    $(".shortstory, article, .th-item")
-        .each(
-            (_, element) => {
-
-
-                const item =
-                    $(element);
+console.log(
+"Найдено карточек:",
+episodes.length
+);
 
 
 
-                const title =
-                    item
-                    .find(
-                        "h2, .title, .name"
-                    )
-                    .first()
-                    .text()
-                    .trim();
+return episodes.slice(
+0,
+10
+);
 
-
-
-                const link =
-                    item
-                    .find("a")
-                    .first()
-                    .attr("href");
-
-
-
-                if (
-                    !title ||
-                    !link
-                ) {
-
-                    return;
-
-                }
-
-
-
-                const text =
-                    item
-                    .text()
-                    .replace(
-                        /\s+/g,
-                        " "
-                    )
-                    .trim();
-
-
-
-                episodes.push({
-
-                    title:
-                    cleanTitle(title),
-
-
-                    episode:
-                    findEpisode(text),
-
-
-                    voice:
-                    findVoice(text),
-
-
-                    url:
-                    absoluteUrl(link),
-
-
-                    image:
-                    findImage(item),
-
-
-                    description:
-                    text.substring(
-                        0,
-                        300
-                    )
-
-                });
-
-
-            }
-        );
-
-
-
-    console.log(
-        "📺 Найдено:",
-        episodes.length
-    );
-
-
-    return episodes.slice(
-        0,
-        10
-    );
 
 }
 
 
 
-function findEpisode(text) {
-
-    const match =
-        text.match(
-            /(\d+)\s*(серия|эпизод|episode)/i
-        );
 
 
-    return match
-        ? match[1]
-        : "?";
+function findEpisode(text){
+
+
+const match =
+text.match(
+/(\d+)\s*(серия|эпизод)/i
+);
+
+
+
+return match
+?
+match[1]
+:
+"?";
+
 
 }
 
 
 
-function findVoice(text) {
-
-    const voices = [
-
-        "AniLibria",
-        "AniDUB",
-        "AnimeVost",
-        "Jaskier",
-        "Субтитры"
-
-    ];
 
 
-    for (
-        const voice of voices
-    ) {
-
-        if (
-            text
-            .toLowerCase()
-            .includes(
-                voice.toLowerCase()
-            )
-        ) {
-
-            return voice;
-
-        }
-
-    }
+function findVoice(text){
 
 
-    return "Не указана";
+const voices=[
+
+"AniLibria",
+"AniDUB",
+"AnimeVost",
+"Jaskier",
+"Субтитры"
+
+];
+
+
+
+for(
+const voice of voices
+){
+
+if(
+text
+.toLowerCase()
+.includes(
+voice.toLowerCase()
+)
+){
+
+return voice;
+
+}
+
+}
+
+
+return "Не указана";
+
 
 }
 
 
 
-function findImage(item) {
 
-    const img =
-        item
-        .find("img")
-        .first()
-        .attr("src");
+function absoluteUrl(url){
 
 
-    if (!img) {
-
-        return null;
-
-    }
+if(!url)
+return null;
 
 
-    return absoluteUrl(img);
-
-}
+if(
+url.startsWith("http")
+)
+return url;
 
 
 
-function absoluteUrl(url) {
+return (
+"https://jut-su.net/" +
+url.replace(
+/^\//,
+""
+)
+);
 
-    if (
-        !url
-    ) {
-
-        return null;
-
-    }
-
-
-    if (
-        url.startsWith("http")
-    ) {
-
-        return url;
-
-    }
-
-
-    return (
-        JUTSU_URL +
-        url.replace(
-            /^\//,
-            ""
-        )
-    );
-
-}
-
-
-
-function cleanTitle(title) {
-
-    return title
-        .replace(
-            /\[.*?\]/g,
-            ""
-        )
-        .replace(
-            /\s+/g,
-            " "
-        )
-        .trim();
 
 }
