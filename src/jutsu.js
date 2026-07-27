@@ -38,21 +38,17 @@ export async function getNewEpisodes() {
     }
 
 
-    const html =
+const html =
     await response.text();
+
 
 console.log(
     html.substring(0, 1000)
 );
 
+
 const $ =
     cheerio.load(html);
-
-
-
-    const $ =
-        cheerio.load(html);
-
 
 
     const episodes = [];
