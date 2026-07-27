@@ -31,7 +31,6 @@ cheerio.load(html);
 const links=[];
 
 
-
 $(".grid-items a")
 .each(
 (_,el)=>{
@@ -42,15 +41,25 @@ $(el).attr("href");
 
 
 if(
-href &&
-href.includes("/anime/")
+!href
+) return;
+
+
+
+const url =
+fixUrl(href);
+
+
+
+if(
+url &&
+isAnimePage(url)
 ){
 
-links.push(
-fixUrl(href)
-);
+links.push(url);
 
 }
+
 
 }
 );
