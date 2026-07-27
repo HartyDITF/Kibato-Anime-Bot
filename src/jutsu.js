@@ -337,3 +337,19 @@ return BASE + "/" + url.replace(
 );
 
 }
+
+
+
+function isAnimePage(url){
+
+return (
+
+url.includes("/anime/") &&
+
+!url.includes("/anime/page") &&
+
+!url.endsWith("/anime/")
+
+);
+
+}
