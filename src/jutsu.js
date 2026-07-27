@@ -47,11 +47,10 @@ href.includes("/anime/")
 ){
 
 links.push(
-BASE + href
+fixUrl(href)
 );
 
 }
-
 
 }
 );
