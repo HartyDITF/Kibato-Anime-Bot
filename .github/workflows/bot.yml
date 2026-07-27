@@ -1,0 +1,64 @@
+name: Kibato Anime Bot
+
+on:
+
+  schedule:
+
+    - cron: "*/30 * * * *"
+
+
+  workflow_dispatch:
+
+
+
+jobs:
+
+  run-bot:
+
+    runs-on:
+      ubuntu-latest
+
+
+    steps:
+
+
+      - name:
+          📥 Скачать репозиторий
+
+        uses:
+          actions/checkout@v4
+
+
+
+      - name:
+          🟢 Установить Node.js
+
+        uses:
+          actions/setup-node@v4
+
+        with:
+
+          node-version:
+            22
+
+
+
+      - name:
+          📦 Установить зависимости
+
+        run:
+          npm install
+
+
+
+      - name:
+          🌸 Запустить Kibato Anime
+
+        env:
+
+          DISCORD_WEBHOOK:
+            ${{ secrets.DISCORD_WEBHOOK }}
+
+        run:
+
+          node src/index.js
