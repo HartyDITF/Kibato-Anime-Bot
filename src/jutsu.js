@@ -1,49 +1,25 @@
 import * as cheerio from "cheerio";
 
 
-const JUTSU_URL =
-"https://jut-su.net/anime/";
+const BASE =
+"https://jut-su.net";
 
+
+const LIST =
+"https://jut-su.net/anime/";
 
 
 export async function getNewEpisodes(){
 
 
 console.log(
-"🔎 Открываем:",
-JUTSU_URL
+"🔎 Проверяем Jut-su"
 );
-
-
-
-const response =
-await fetch(
-JUTSU_URL,
-{
-headers:{
-"User-Agent":
-"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 Safari/537.36",
-
-"Accept":
-"text/html"
-}
-}
-);
-
-
-
-if(!response.ok){
-
-throw new Error(
-`Jut-su ошибка: ${response.status}`
-);
-
-}
 
 
 
 const html =
-await response.text();
+await getPage(LIST);
 
 
 
@@ -51,25 +27,42 @@ const $ =
 cheerio.load(html);
 
 
-console.log(
-"Первые div:"
+
+const links=[];
+
+
+
+$(".grid-items a")
+.each(
+(_,el)=>{
+
+
+const href =
+$(el).attr("href");
+
+
+if(
+href &&
+href.includes("/anime/")
+){
+
+links.push(
+BASE + href
+);
+
+}
+
+
+}
 );
 
 
-$("div").slice(0,30).each((i,el)=>{
 
-    console.log(
-        i,
-        $(el).attr("class")
-    );
-
-});
-
-
-
-console.log(
-"Ссылок:",
-$("a").length
+const unique =
+[...new Set(links)]
+.slice(
+0,
+10
 );
 
 
@@ -78,106 +71,127 @@ const episodes=[];
 
 
 
-$(".jutsu-sect__content .grid-item, .grid-items > div")
-.each(
-(_,el)=>{
+for(
+const url of unique
+){
 
 
-const item =
-$(el);
+try{
+
+
+const data =
+await parseAnime(url);
+
+
+if(data){
+
+episodes.push(data);
+
+}
+
+
+}catch(e){
+
+console.log(
+"Ошибка:",
+url
+);
+
+}
+
+
+}
+
+
+
+console.log(
+"Найдено:",
+episodes.length
+);
+
+
+
+return episodes;
+
+
+}
+
+
+
+
+
+async function parseAnime(url){
+
+
+const html =
+await getPage(url);
+
+
+
+const $ =
+cheerio.load(html);
 
 
 
 const title =
-item
-.find(
-"h2,h3,a"
-)
+$("h1")
 .first()
 .text()
 .trim();
 
 
 
-const link =
-item
-.find("a")
-.first()
-.attr("href");
+if(!title)
+return null;
+
+
+
+const text =
+$("body")
+.text()
+.replace(
+(/\s+/g),
+" "
+);
 
 
 
 const image =
-item
-.find("img")
+$("img")
 .first()
 .attr("src");
 
-console.log(
-"КАРТОЧКА:",
-title,
-link
-);
 
-if(
-title &&
-link
-){
 
-episodes.push({
+return {
+
 
 title,
+
 
 episode:
-findEpisode(
-item.text()
-),
+findEpisode(text),
+
 
 voice:
-findVoice(
-item.text()
-),
+findVoice(text),
 
-url:
-absoluteUrl(
-link
-),
+
+url,
+
 
 image:
-absoluteUrl(
-image
-),
+fixUrl(image),
+
 
 description:
-item.text()
-.trim()
-.substring(
+text.substring(
 0,
 300
 )
 
-});
 
-
-}
-
-
-}
-);
-
-
-
-console.log(
-"Найдено карточек:",
-episodes.length
-);
-
-
-
-return episodes.slice(
-0,
-10
-);
+};
 
 
 }
@@ -191,20 +205,28 @@ function findEpisode(text){
 
 const match =
 text.match(
-/(\d+)\s*(серия|эпизод)/i
+/(\d+)\s*сер(ия|ии|ий)/i
 );
 
 
+if(match)
+return match[1];
 
-return match
+
+const total =
+text.match(
+/(\d+)\s*серии/i
+);
+
+
+return total
 ?
-match[1]
+total[1]
 :
 "?";
 
 
 }
-
 
 
 
@@ -218,40 +240,75 @@ const voices=[
 "AniDUB",
 "AnimeVost",
 "Jaskier",
-"Субтитры"
+"SHIZA Project"
 
 ];
 
 
-
 for(
-const voice of voices
+const v of voices
 ){
 
 if(
-text
-.toLowerCase()
-.includes(
-voice.toLowerCase()
+text.includes(v)
 )
-){
+return v;
 
-return voice;
-
-}
 
 }
 
 
 return "Не указана";
 
+}
+
+
+
+
+
+async function getPage(url){
+
+
+const response =
+await fetch(
+url,
+{
+
+headers:{
+
+"User-Agent":
+"Mozilla/5.0 Chrome/120",
+
+"Accept":
+"text/html"
+
+}
+
+}
+);
+
+
+
+if(!response.ok){
+
+throw new Error(
+response.status
+);
+
+}
+
+
+
+return await response.text();
+
 
 }
 
 
 
 
-function absoluteUrl(url){
+
+function fixUrl(url){
 
 
 if(!url)
@@ -265,13 +322,6 @@ return url;
 
 
 
-return (
-"https://jut-su.net/" +
-url.replace(
-/^\//,
-""
-)
-);
-
+return BASE + url;
 
 }
