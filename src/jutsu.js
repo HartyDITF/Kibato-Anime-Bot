@@ -51,6 +51,22 @@ const $ =
     cheerio.load(html);
 
 
+console.log(
+    "Ссылок найдено:",
+    $("a").length
+);
+
+
+$("a").slice(0,20).each((i,el)=>{
+
+    console.log(
+        i,
+        $(el).text().trim(),
+        $(el).attr("href")
+    );
+
+});
+
     const episodes = [];
 
 
