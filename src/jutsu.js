@@ -355,14 +355,10 @@ return BASE + "/" + url.replace(
 
 function isAnimePage(url){
 
-return (
-
-url.includes("/anime/") &&
-
-!url.includes("/anime/page") &&
-
-!url.endsWith("/anime/")
-
-);
+    return (
+        url.includes("jut-su.net/") &&
+        url.endsWith(".html") &&
+        !url.includes("/page/")
+    );
 
 }
