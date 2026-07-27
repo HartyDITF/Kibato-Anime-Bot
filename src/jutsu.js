@@ -91,7 +91,7 @@ $(el);
 const title =
 item
 .find(
-"h2,h3,.title,.name"
+"h2,h3,a"
 )
 .first()
 .text()
