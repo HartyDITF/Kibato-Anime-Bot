@@ -1,5 +1,15 @@
 name: Kibato Anime Bot
 
+permissions:
+  contents: write
+
+
+on:
+
+  schedule:
+
+    - cron: "*/30 * * * *"
+
 on:
 
   schedule:
