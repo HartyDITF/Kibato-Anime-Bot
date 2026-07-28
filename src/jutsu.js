@@ -10,12 +10,13 @@ async function get(url){
     const {data}=await axios.get(url,{
         headers:{
             "User-Agent":
-            "Mozilla/5.0"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         },
         timeout:20000
     });
 
     return data;
+
 }
 
 
@@ -35,90 +36,116 @@ BASE + "/ongoing"
 );
 
 
+
 const $ =
 cheerio.load(html);
 
 
 
-const anime=[];
+const anime = [];
 
 
 
-$("a").each((i,el)=>{
+// ищем только блоки с постерами
+$("img").each((i,el)=>{
+
+
+    const img =
+    $(el);
+
+
+
+    const src =
+    img.attr("src");
+
+
+    const alt =
+    img.attr("alt");
+
+
+
+    const parent =
+    img.closest("a");
+
 
 
     const href =
-    $(el).attr("href");
-
-
-    const title =
-    $(el)
-    .find("img")
-    .attr("alt")
-    ||
-    $(el)
-    .text()
-    .trim();
-
-
-
-    const image =
-    $(el)
-    .find("img")
-    .attr("src");
+    parent.attr("href");
 
 
 
     if(
-        href &&
-        image &&
-        title &&
-        title.length > 3
-    ){
+        !href ||
+        !src ||
+        !alt
+    )
+        return;
 
 
-        if(
-            ![
-                "Все аниме",
-                "Субтитры",
-                "Китайские",
-                "2024 год",
-                "2025 год",
-                "2026 год"
-            ]
-            .includes(title)
-        ){
+
+    // убираем мусор
+    if(
+        alt.length < 3 ||
+        alt.includes("JUT") ||
+        alt.includes("Все") ||
+        alt.includes("202")
+    )
+        return;
 
 
-            anime.push({
 
-                title,
-
-                href:
-                href.startsWith("http")
-                ?
-                href
-                :
-                BASE+href,
-
-                image
-
-            });
+    if(
+        !href.includes("/anime/")
+    )
+        return;
 
 
-        }
+
+    anime.push({
+
+        title: alt.trim(),
+
+        href:
+        href.startsWith("http")
+        ?
+        href
+        :
+        BASE + href,
 
 
-    }
+        image:
+        src.startsWith("http")
+        ?
+        src
+        :
+        BASE + src
+
+    });
 
 
 });
 
 
 
+// убираем дубли
+
+const unique =
+[
+...new Map(
+anime.map(
+x=>[
+x.href,
+x
+]
+)
+).values()
+];
+
+
+
 console.log(
 "Найдено аниме:",
-anime.length
+unique.length
 );
 
 
@@ -128,7 +155,7 @@ const result=[];
 
 
 for(
-const item of anime
+const item of unique
 ){
 
 
@@ -147,19 +174,67 @@ cheerio.load(page);
 
 const text =
 $$.text()
-.replace(/\s+/g," ");
-
-
-
-const series =
-text.match(
-/(\d+)\s*серий/
+.replace(
+(/\s+/g),
+" "
 );
 
 
 
-if(!series)
+/*
+ищем:
+12 серий
+24 серии
+1171 серия
+*/
+
+const match =
+text.match(
+/(\d+)\s*(серий|серия|эпизодов)/
+);
+
+
+
+if(!match)
 continue;
+
+
+
+const episode =
+Number(match[1]);
+
+
+
+if(
+episode <= 0
+)
+continue;
+
+
+
+// озвучка
+
+let voice =
+"Не указана";
+
+
+const voiceMatch =
+text.match(
+/Озвучка от:\s*([^]+?)Тип/
+);
+
+
+
+if(
+voiceMatch
+){
+
+voice =
+voiceMatch[1]
+.trim()
+.replace(/\s+/g," ");
+
+}
 
 
 
@@ -167,16 +242,11 @@ result.push({
 
 title:item.title,
 
-episode:Number(series[1]),
+episode,
 
-voice:"JUT-SU",
+voice,
 
-image:
-item.image.startsWith("http")
-?
-item.image
-:
-BASE+item.image
+image:item.image
 
 });
 
@@ -185,16 +255,17 @@ BASE+item.image
 console.log(
 "Найдено:",
 item.title,
-series[1]
+episode
 );
 
 
 
 }
+
 catch(e){
 
 console.log(
-"Ошибка:",
+"Ошибка страницы:",
 item.title
 );
 
@@ -206,6 +277,5 @@ item.title
 
 
 return result;
-
 
 }
