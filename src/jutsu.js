@@ -2,11 +2,13 @@ import * as cheerio from "cheerio";
 
 const BASE_URL = "https://jut-su.net";
 
-const PAGES = [
-    "/anime/",
-    "/anime/page/2/",
-    "/anime/page/3/"
-];
+const PAGES = Array.from(
+    {length: 10},
+    (_, i) =>
+        i === 0
+        ? "/anime/"
+        : `/anime/page/${i + 1}/`
+);
 
 
 export async function getNewEpisodes() {
