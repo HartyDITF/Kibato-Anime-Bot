@@ -1,6 +1,6 @@
 import { getNewEpisodes } from "./jutsu.js";
 import { sendDiscordEpisode } from "./discord.js";
-import { wasSent, markSent } from "./storage.js";
+import { getLastEpisode, updateEpisode } from "./storage.js";
 
 
 async function main(){
