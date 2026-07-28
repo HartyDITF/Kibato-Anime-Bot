@@ -34,9 +34,59 @@ async function main() {
     let sent = 0;
 
 
-    for (
-        const episode of episodes
-    ) {
+   for (
+ const episode of episodes
+){
+
+    try{
+
+
+        const id =
+        createId(
+            episode
+        );
+
+
+        if(
+            wasSent(id)
+        ){
+
+            console.log(
+                "Дубликат:",
+                episode.title
+            );
+
+            continue;
+
+        }
+
+
+
+        await sendDiscordEpisode(
+            webhook,
+            episode
+        );
+
+
+        markSent(id);
+
+
+        sent++;
+
+
+    }
+    catch(error){
+
+        console.log(
+            "Ошибка отправки:",
+            episode.title,
+            error.message
+        );
+
+    }
+
+
+}
 
 
         const id =
