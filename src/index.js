@@ -3,16 +3,20 @@ import { sendDiscordEpisode } from "./discord.js";
 import { wasSent, markSent } from "./storage.js";
 
 
-async function main() {
+async function main(){
 
-    console.log("🌸 Kibato Anime запуск");
+
+    console.log(
+        "🌸 Kibato Anime запуск"
+    );
 
 
     const webhook =
-        process.env.DISCORD_WEBHOOK;
+    process.env.DISCORD_WEBHOOK;
 
 
-    if (!webhook) {
+
+    if(!webhook){
 
         throw new Error(
             "Нет DISCORD_WEBHOOK"
@@ -21,8 +25,10 @@ async function main() {
     }
 
 
+
     const episodes =
-        await getNewEpisodes();
+    await getNewEpisodes();
+
 
 
     console.log(
@@ -31,116 +37,95 @@ async function main() {
     );
 
 
+
     let sent = 0;
 
 
-   for (
- const episode of episodes
-){
 
-    try{
-
-
-        const id =
-        createId(
-            episode
-        );
+    for(
+        const episode of episodes
+    ){
 
 
-        if(
-            wasSent(id)
-        ){
-
-            console.log(
-                "Дубликат:",
-                episode.title
-            );
-
-            continue;
-
-        }
+        try{
 
 
-
-        await sendDiscordEpisode(
-            webhook,
-            episode
-        );
-
-
-        markSent(id);
-
-
-        sent++;
-
-
-    }
-    catch(error){
-
-        console.log(
-            "Ошибка отправки:",
-            episode.title,
-            error.message
-        );
-
-    }
-
-
-}
-
-
-        const id =
+            const id =
             createId(
                 episode
             );
 
 
-        if (
-            wasSent(id)
-        ) {
+
+            if(
+                wasSent(id)
+            ){
+
+                console.log(
+                    "Дубликат:",
+                    episode.title,
+                    episode.episode
+                );
+
+                continue;
+
+            }
+
+
+
+            await sendDiscordEpisode(
+                webhook,
+                episode
+            );
+
+
+
+            markSent(id);
+
+
+
+            sent++;
+
+
 
             console.log(
-                "Дубликат:",
+                "Отправлено:",
                 episode.title,
                 episode.episode
             );
 
-            continue;
+
+        }
+        catch(error){
+
+
+            console.log(
+                "Ошибка отправки:",
+                episode.title,
+                error.message
+            );
+
 
         }
 
 
-
-        await sendDiscordEpisode(
-            webhook,
-            episode
-        );
-
-
-        markSent(id);
-
-
-        sent++;
-
-
-        console.log(
-            "Отправлено:",
-            episode.title,
-            episode.episode
-        );
-
     }
+
 
 
     console.log(
         `🌸 Готово. Отправлено: ${sent}`
     );
 
+
 }
 
 
 
+
+
 function createId(ep){
+
 
     return (
 
@@ -157,13 +142,15 @@ function createId(ep){
         "-"
     );
 
+
 }
+
 
 
 
 main()
 .catch(
-    error => {
+    error=>{
 
         console.error(
             "Ошибка:",
