@@ -49,9 +49,16 @@ async function main(){
 
 
             const last =
-            getLastEpisode(
-                episode.title
-            );
+           const id =
+episode.url;
+
+            const last =
+getLastEpisode(id);
+
+            updateEpisode(
+episode.url,
+episode.episode
+);
 
 
 
