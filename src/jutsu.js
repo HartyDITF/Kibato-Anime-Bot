@@ -56,16 +56,14 @@ export async function getNewEpisodes() {
             return;
 
         result.push({
-            title,
-            episode,
-            voice,
-            image: image
-                ? BASE + image
-                : null,
-            url: href
-                ? BASE + href
-                : null
-        });
+    title: item.title,
+    episode: item.episode,
+    voice: item.voice,
+    image: item.image,
+    url: item.url,
+    rating: item.rating,
+    time: item.time
+});
 
         console.log(
             "Новая серия:",
