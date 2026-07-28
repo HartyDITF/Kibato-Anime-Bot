@@ -50,27 +50,26 @@ async function main(){
         try{
 
 
-            const id =
-            createId(
-                episode
-            );
+           const last =
+getLastEpisode(
+    episode.title
+);
 
 
 
-            if(
-                wasSent(id)
-            ){
+if(
+    episode.episode <= last
+){
 
-                console.log(
-                    "Дубликат:",
-                    episode.title,
-                    episode.episode
-                );
+    console.log(
+        "Нет новой серии:",
+        episode.title,
+        episode.episode
+    );
 
-                continue;
+    continue;
 
-            }
-
+}
 
 
             await sendDiscordEpisode(
