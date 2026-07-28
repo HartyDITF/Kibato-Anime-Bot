@@ -1,36 +1,28 @@
 import fs from "fs";
 
 
-const FILE = "./sent.json";
+const FILE="./sent.json";
+
 
 
 function load(){
 
-    if(!fs.existsSync(FILE)){
-        return {};
-    }
+if(!fs.existsSync(FILE))
+return {};
 
 
-    try{
+try{
 
-        return JSON.parse(
-            fs.readFileSync(
-                FILE,
-                "utf8"
-            )
-        );
+return JSON.parse(
+fs.readFileSync(FILE,"utf8")
+);
 
-    }
-    catch(error){
+}
+catch{
 
-        console.log(
-            "Ошибка чтения storage:",
-            error.message
-        );
+return {};
 
-        return {};
-
-    }
+}
 
 }
 
@@ -38,46 +30,44 @@ function load(){
 
 function save(data){
 
-    fs.writeFileSync(
-        FILE,
-        JSON.stringify(
-            data,
-            null,
-            2
-        )
-    );
+fs.writeFileSync(
+FILE,
+JSON.stringify(
+data,
+null,
+2
+)
+);
 
 }
 
 
 
+export function getLastEpisode(id){
 
-export function getLastEpisode(title){
+const data=load();
 
-    const data = load();
-
-    return data[title] || 0;
+return data[id] || 0;
 
 }
 
 
 
+export function updateEpisode(id,episode){
 
-export function updateEpisode(title, episode){
-
-    const data = load();
-
-
-    data[title] = episode;
+const data=load();
 
 
-    save(data);
+data[id]=episode;
 
 
-    console.log(
-        "💾 Сохранено:",
-        title,
-        episode
-    );
+save(data);
+
+
+console.log(
+"💾 Сохранено:",
+id,
+episode
+);
 
 }
