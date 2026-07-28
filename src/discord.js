@@ -18,8 +18,13 @@ export async function sendDiscordEpisode(
         `🎬 ${episode.title} — ${episode.episode} серия`,
 
 
-        description:
-        `
+       description:
+`🔥 Новая серия появилась на JUT-SU\n\n🎙 Озвучка: ${episode.voice || "Не указана"}`
+       
+           if(episode.image){
+ embed.setThumbnail(episode.image);
+}
+           `
 🎙 Озвучка: **${episode.voice}**
 
 ${episode.description || ""}
