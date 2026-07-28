@@ -5,7 +5,6 @@ import { getLastEpisode, updateEpisode } from "./storage.js";
 
 async function main(){
 
-
     console.log(
         "🌸 Kibato Anime запуск"
     );
@@ -13,7 +12,6 @@ async function main(){
 
     const webhook =
     process.env.DISCORD_WEBHOOK;
-
 
 
     if(!webhook){
@@ -50,26 +48,37 @@ async function main(){
         try{
 
 
-           const last =
-getLastEpisode(
-    episode.title
-);
+            const last =
+            getLastEpisode(
+                episode.title
+            );
 
 
 
-if(
-    episode.episode <= last
-){
+            console.log(
+                "Проверка:",
+                episode.title,
+                "было:",
+                last,
+                "сейчас:",
+                episode.episode
+            );
 
-    console.log(
-        "Нет новой серии:",
-        episode.title,
-        episode.episode
-    );
 
-    continue;
 
-}
+            if(
+                episode.episode <= last
+            ){
+
+                console.log(
+                    "⏭ Пропуск:",
+                    episode.title
+                );
+
+                continue;
+
+            }
+
 
 
             await sendDiscordEpisode(
@@ -80,9 +89,9 @@ if(
 
 
             updateEpisode(
-    episode.title,
-    episode.episode
-);
+                episode.title,
+                episode.episode
+            );
 
 
 
@@ -90,19 +99,12 @@ if(
 
 
 
-            console.log(
-                "Отправлено:",
-                episode.title,
-                episode.episode
-            );
-
-
         }
         catch(error){
 
 
             console.log(
-                "Ошибка отправки:",
+                "Ошибка:",
                 episode.title,
                 error.message
             );
@@ -119,34 +121,7 @@ if(
         `🌸 Готово. Отправлено: ${sent}`
     );
 
-
 }
-
-
-
-
-
-function createId(ep){
-
-
-    return (
-
-        ep.title +
-        "_" +
-        ep.episode +
-        "_" +
-        ep.voice
-
-    )
-    .toLowerCase()
-    .replace(
-        /[^a-z0-9а-яё]/gi,
-        "-"
-    );
-
-
-}
-
 
 
 
@@ -155,7 +130,6 @@ main()
     error=>{
 
         console.error(
-            "Ошибка:",
             error
         );
 
