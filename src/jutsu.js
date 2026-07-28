@@ -1,13 +1,12 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-
 const BASE = "https://jut-su.net";
 
 
 async function get(url){
 
-    const {data}=await axios.get(url,{
+    const res = await axios.get(url,{
         headers:{
             "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -15,202 +14,207 @@ async function get(url){
         timeout:20000
     });
 
-    return data;
-
+    return res.data;
 }
 
 
 
 export async function getNewEpisodes(){
 
-
-console.log(
-"🔎 Проверяем JUT-SU онгоинги"
-);
+    console.log("🔎 Проверяем JUT-SU онгоинги");
 
 
-
-const html =
-await get(
-BASE + "/ongoing"
-);
+    const html = await get(
+        BASE + "/ongoing"
+    );
 
 
+    const $ = cheerio.load(html);
 
-const $ =
-cheerio.load(html);
+
+    const anime = new Map();
 
 
 
-const anime=[];
+    $("a").each((i,el)=>{
 
 
-
-$(".shortstory").each((i,el)=>{
-
-
-    const a =
-    $(el).find("a").first();
+        const href=$(el).attr("href");
 
 
-    const href =
-    a.attr("href");
+        const img=$(el)
+        .find("img")
+        .attr("src");
 
 
-    const title =
-    $(el)
-    .find("img")
-    .attr("alt");
+        let title=$(el)
+        .find("img")
+        .attr("alt");
 
 
+        if(!title){
 
-    const image =
-    $(el)
-    .find("img")
-    .attr("src");
+            title=$(el)
+            .text()
+            .trim();
+
+        }
 
 
+        if(
+            href &&
+            img &&
+            title &&
+            title.length > 3 &&
+            !title.includes("год") &&
+            !title.includes("Все") &&
+            !title.includes("Суб") &&
+            !title.includes("Китай")
+        ){
 
-    if(
-        href &&
-        title &&
-        !title.includes("год")
-    ){
 
-        anime.push({
-
-            title,
-
-            href:
+            const url =
             href.startsWith("http")
             ?
             href
             :
-            BASE+href,
+            BASE+href;
 
 
-            image:
-            image?.startsWith("http")
-            ?
-            image
-            :
-            BASE+image
 
-        });
+            anime.set(url,{
+
+                title,
+                url,
+                image:
+                img.startsWith("http")
+                ?
+                img
+                :
+                BASE+img
+
+            });
+
+
+        }
+
+
+    });
+
+
+
+    console.log(
+        "Найдено аниме:",
+        anime.size
+    );
+
+
+
+    const result=[];
+
+
+
+    for(
+        const item of anime.values()
+    ){
+
+
+        try{
+
+
+            const page =
+            await get(item.url);
+
+
+            const $$ =
+            cheerio.load(page);
+
+
+
+            const text =
+            $$
+            .text()
+            .replace(/\s+/g," ");
+
+
+
+            /*
+             ищем реальные серии:
+             "Серия 12"
+             "12 серия"
+             "12 серий"
+            */
+
+
+            const episodes = [
+                ...text.matchAll(
+                    /(\d+)\s*(?:серия|серии|эпизод)/gi
+                )
+            ];
+
+
+
+            if(
+                episodes.length === 0
+            )
+                continue;
+
+
+
+            const last =
+            Number(
+                episodes
+                [episodes.length-1][1]
+            );
+
+
+
+            result.push({
+
+                title:item.title,
+
+                episode:last,
+
+                voice:
+                "JUT-SU",
+
+                image:item.image,
+
+                url:item.url
+
+            });
+
+
+
+            console.log(
+                "Найдена серия:",
+                item.title,
+                last
+            );
+
+
+        }
+        catch(e){
+
+            console.log(
+                "Ошибка страницы:",
+                item.title
+            );
+
+        }
 
 
     }
 
 
-});
+
+    console.log(
+        "Найдено серий:",
+        result.length
+    );
 
 
 
-console.log(
-"Найдено аниме:",
-anime.length
-);
-
-
-
-const result=[];
-
-
-
-for(
-const item of anime.slice(0,30)
-){
-
-try{
-
-
-const page =
-await get(item.href);
-
-
-
-const $$ =
-cheerio.load(page);
-
-
-
-let episode = null;
-
-
-
-$$("a").each((i,el)=>{
-
-
-const txt =
-$$(el).text()
-.trim();
-
-
-
-const m =
-txt.match(
-/(\d+)\s*серия/
-);
-
-
-
-if(m){
-
-episode =
-Math.max(
-episode || 0,
-Number(m[1])
-);
-
-}
-
-
-});
-
-
-
-if(!episode)
-continue;
-
-
-
-console.log(
-"Серия:",
-item.title,
-episode
-);
-
-
-
-result.push({
-
-title:item.title,
-
-episode,
-
-voice:"JUT-SU",
-
-image:item.image
-
-});
-
-
-}
-catch(e){
-
-console.log(
-"Ошибка:",
-item.title
-);
-
-}
-
-
-}
-
-
-
-return result;
-
+    return result;
 
 }
