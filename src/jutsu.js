@@ -5,7 +5,7 @@ import * as cheerio from "cheerio";
 const BASE = "https://jut-su.net";
 
 
-async function request(url){
+async function get(url){
 
     const {data}=await axios.get(url,{
         headers:{
@@ -23,11 +23,14 @@ async function request(url){
 export async function getNewEpisodes(){
 
 
-console.log("🔎 Проверяем JUT-SU онгоинги");
+console.log(
+"🔎 Проверяем JUT-SU онгоинги"
+);
+
 
 
 const html =
-await request(
+await get(
 BASE + "/ongoing"
 );
 
@@ -37,7 +40,7 @@ cheerio.load(html);
 
 
 
-const links=[];
+const anime=[];
 
 
 
@@ -49,39 +52,62 @@ $("a").each((i,el)=>{
 
 
     const title =
-    $(el).text().trim();
+    $(el)
+    .find("img")
+    .attr("alt")
+    ||
+    $(el)
+    .text()
+    .trim();
 
 
 
-    /*
-       Настоящие страницы JUT-SU имеют:
-       /anime/....
-       и название длиннее
-    */
+    const image =
+    $(el)
+    .find("img")
+    .attr("src");
+
 
 
     if(
         href &&
-        href.includes("/anime/")
-        &&
-        title.length > 5
-        &&
-        ![
-            "Все аниме",
-            "С субтитрами",
-            "Китайские"
-        ].includes(title)
+        image &&
+        title &&
+        title.length > 3
     ){
 
-        links.push({
-            title,
-            href:
-            href.startsWith("http")
-            ?
-            href
-            :
-            BASE+href
-        });
+
+        if(
+            ![
+                "Все аниме",
+                "Субтитры",
+                "Китайские",
+                "2024 год",
+                "2025 год",
+                "2026 год"
+            ]
+            .includes(title)
+        ){
+
+
+            anime.push({
+
+                title,
+
+                href:
+                href.startsWith("http")
+                ?
+                href
+                :
+                BASE+href,
+
+                image
+
+            });
+
+
+        }
+
 
     }
 
@@ -92,7 +118,7 @@ $("a").each((i,el)=>{
 
 console.log(
 "Найдено аниме:",
-links.length
+anime.length
 );
 
 
@@ -102,7 +128,7 @@ const result=[];
 
 
 for(
-const anime of links
+const item of anime
 ){
 
 
@@ -110,9 +136,8 @@ try{
 
 
 const page =
-await request(
-anime.href
-);
+await get(item.href);
+
 
 
 const $$ =
@@ -124,13 +149,6 @@ const text =
 $$.text()
 .replace(/\s+/g," ");
 
-
-
-/*
- Берем только:
- "Озвучка от"
- и количество серий
-*/
 
 
 const series =
@@ -145,33 +163,28 @@ continue;
 
 
 
-const image =
-$$(
-"meta[property='og:image']"
-)
-.attr("content");
-
-
-
 result.push({
 
-title:
-anime.title,
+title:item.title,
 
-episode:
-Number(series[1]),
+episode:Number(series[1]),
 
-voice:
-"JUT-SU",
+voice:"JUT-SU",
 
-image
+image:
+item.image.startsWith("http")
+?
+item.image
+:
+BASE+item.image
 
 });
 
 
+
 console.log(
 "Найдено:",
-anime.title,
+item.title,
 series[1]
 );
 
@@ -181,8 +194,8 @@ series[1]
 catch(e){
 
 console.log(
-"Ошибка страницы",
-anime.title
+"Ошибка:",
+item.title
 );
 
 }
