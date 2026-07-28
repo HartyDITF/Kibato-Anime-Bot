@@ -1,7 +1,7 @@
 import fs from "fs";
 
 
-const FILE="./sent.json";
+const FILE = "./sent.json";
 
 
 
@@ -32,7 +32,6 @@ function load(){
 
 
 
-
 function save(data){
 
     fs.writeFileSync(
@@ -51,10 +50,7 @@ function save(data){
 
 export function getLastEpisode(title){
 
-
-    const data =
-    load();
-
+    const data = load();
 
     return data[title] || 0;
 
@@ -63,16 +59,12 @@ export function getLastEpisode(title){
 
 
 
-export function updateEpisode(
-    title,
-    episode
-){
+export function updateEpisode(title, episode){
 
-    const data =
-    load();
+    const data = load();
 
 
-    data[title]=episode;
+    data[title] = episode;
 
 
     save(data);
