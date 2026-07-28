@@ -2,22 +2,20 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 
 
-const BASE="https://jut-su.net";
+const BASE = "https://jut-su.net";
 
 
 async function get(url){
 
-const res =
-await axios.get(url,{
-headers:{
-"User-Agent":
-"Mozilla/5.0"
-},
-timeout:20000
-});
+    const {data} = await axios.get(url,{
+        headers:{
+            "User-Agent":
+            "Mozilla/5.0"
+        },
+        timeout:20000
+    });
 
-return res.data;
-
+    return data;
 }
 
 
@@ -33,12 +31,12 @@ console.log(
 
 const html =
 await get(
-BASE+"/ongoing"
+BASE + "/ongoing"
 );
 
 
 
-const $=
+const $ =
 cheerio.load(html);
 
 
@@ -63,23 +61,30 @@ return;
 
 
 
-const link =
+let block =
 $(img)
-.closest("a")
-.attr("href");
-
-
-
-if(!link)
-return;
+.parent();
 
 
 
 let title =
-$(img)
-.closest("a")
+block
 .text()
 .trim();
+
+
+
+if(
+title.length < 3
+){
+
+title =
+$(img)
+.closest("div")
+.text()
+.trim();
+
+}
 
 
 
@@ -89,9 +94,39 @@ title
 
 
 
+let href =
+$(img)
+.closest("a")
+.attr("href");
+
+
+
+if(!href){
+
+
+href =
+$(img)
+.parent()
+.attr("href");
+
+
+}
+
+
+
 if(
-!title ||
-title.length < 3
+!href ||
+!title
+)
+return;
+
+
+
+if(
+title.includes("Все аниме") ||
+title.includes("Онгоинги") ||
+title.includes("2025") ||
+title.includes("2026")
 )
 return;
 
@@ -102,11 +137,11 @@ anime.push({
 title,
 
 url:
-link.startsWith("http")
+href.startsWith("http")
 ?
-link
+href
 :
-BASE+link,
+BASE+href,
 
 
 image:
@@ -130,6 +165,18 @@ anime.length
 
 
 
+for(const a of anime){
+
+console.log(
+"КАРТОЧКА:",
+a.title,
+a.url
+);
+
+}
+
+
+
 const result=[];
 
 
@@ -147,7 +194,7 @@ await get(item.url);
 
 
 
-const $$=
+const $$ =
 cheerio.load(page);
 
 
@@ -159,12 +206,7 @@ $$
 
 
 
-/*
-ищем последний номер серии
-*/
-
-
-const matches =
+const numbers =
 [
 ...text.matchAll(
 /(\d+)\s*(?:серия|серии|эпизод)/gi
@@ -173,16 +215,14 @@ const matches =
 
 
 
-if(
-matches.length===0
-)
+if(!numbers.length)
 continue;
 
 
 
 const episode =
 Number(
-matches[matches.length-1][1]
+numbers[numbers.length-1][1]
 );
 
 
