@@ -5,14 +5,11 @@ import * as cheerio from "cheerio";
 const BASE = "https://jut-su.net";
 
 
-
 async function get(url){
 
-    const {data} =
-    await axios.get(url,{
+    const {data} = await axios.get(url,{
         headers:{
-            "User-Agent":
-            "Mozilla/5.0"
+            "User-Agent":"Mozilla/5.0"
         },
         timeout:20000
     });
@@ -25,16 +22,15 @@ async function get(url){
 
 export async function getNewEpisodes(){
 
-
 console.log(
-"🔎 Проверяем JUT-SU онгоинги"
+"🔎 Проверяем JUT-SU"
 );
 
 
 
 const html =
 await get(
-BASE+"/ongoing"
+BASE + "/ongoing"
 );
 
 
@@ -44,7 +40,7 @@ cheerio.load(html);
 
 
 
-const anime=[];
+const anime = [];
 
 
 
@@ -74,53 +70,43 @@ $(el)
 
 
 
-const seriesText =
-$(el)
-.find(".jutsu-item__label-series")
-.text()
-.trim();
-
-
-
 if(
 title &&
-url &&
-seriesText
+url
 ){
-
-
-const match =
-seriesText.match(
-/(\d+)/
-);
-
-
 
 anime.push({
 
 title,
 
-url,
+url:
+
+url.startsWith("http")
+?
+url
+:
+BASE+url,
+
 
 image:
+
+image
+?
+(
 image.startsWith("http")
 ?
 image
 :
-BASE+image,
-
-episode:
-match
-?
-Number(match[1])
+BASE+image
+)
 :
-0
+null
+
 
 });
 
 
 }
-
 
 
 });
@@ -143,19 +129,98 @@ const item of anime
 ){
 
 
+try{
+
+
+const page =
+await get(item.url);
+
+
+
+const $$ =
+cheerio.load(page);
+
+
+
+let episode = 0;
+
+
+
+$$(".jutsu-episode")
+.each((i,el)=>{
+
+
+const text =
+$$(el)
+.text();
+
+
+
+const match =
+text.match(
+/(\d+)\s*сер/
+);
+
+
+
+if(match){
+
+episode =
+Math.max(
+episode,
+Number(match[1])
+);
+
+}
+
+
+});
+
+
 
 if(
-item.episode <=0
-)
-continue;
+episode === 0
+){
 
+const body =
+$$.text();
+
+
+const matches =
+[
+...body.matchAll(
+/(\d+)\s*серия/g
+)
+];
+
+
+for(
+const m of matches
+){
+
+episode =
+Math.max(
+episode,
+Number(m[1])
+);
+
+}
+
+
+}
+
+
+
+if(
+episode>0
+){
 
 
 result.push({
 
 title:item.title,
 
-episode:item.episode,
+episode,
 
 voice:"JUT-SU",
 
@@ -163,14 +228,14 @@ image:item.image,
 
 url:item.url
 
-});
 
+});
 
 
 console.log(
 "Найдена серия:",
 item.title,
-item.episode
+episode
 );
 
 
@@ -178,8 +243,26 @@ item.episode
 
 
 
+}
+catch(e){
+
 console.log(
-"Найдено серий:",
+"Ошибка:",
+item.title,
+e.message
+);
+
+
+}
+
+
+
+}
+
+
+
+console.log(
+"Итого:",
 result.length
 );
 
