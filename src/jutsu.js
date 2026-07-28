@@ -39,22 +39,33 @@ export async function getNewEpisodes() {
                 $(el).text().trim();
 
 
-            if(
-                href &&
-                href.includes("/anime/") &&
-                title.length > 2
-            ){
+           if(
+    href &&
+    href.includes("/anime/") &&
+    title.length > 2 &&
+    !title.includes("год") &&
+    !title.includes("субтит") &&
+    !title.includes("Китай") &&
+    !title.includes("Все") &&
+    !title.includes("Популяр") &&
+    !title.includes("Подбор")
+){
 
-                animeLinks.push({
+    animeLinks.push({
 
-                    title,
-                    url:
-                    BASE + href
+        title:
+        title
+        .replace(/\s+/g," ")
+        .trim(),
 
-                });
+        url:
+        href.startsWith("http")
+        ? href
+        : BASE + href
 
-            }
+    });
 
+}
         }
     );
 
