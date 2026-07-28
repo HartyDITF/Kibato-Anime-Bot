@@ -1,125 +1,72 @@
 import axios from "axios";
 
-
-function sleep(ms){
-    return new Promise(
-        resolve => setTimeout(resolve, ms)
-    );
-}
-
-
-
-export async function sendDiscordEpisode(
-    webhook,
-    episode
-){
-
+export async function sendDiscordEpisode(webhook, episode) {
 
     const embed = {
-
-        title:
-        `🎬 ${episode.title} — ${episode.episode} серия`,
-
+        title: `🎬 ${episode.title} — ${episode.episode} серия`,
         description:
-        `🎙 Озвучка: ${episode.voice || "JUT-SU"}\n\n🔥 Новая серия появилась на JUT-SU`,
+`🎙 Озвучка: ${episode.voice}
 
-        color:
-        0xff69b4,
-
-        footer:{
-            text:
-            "🌸 Kibato Anime"
+🔥 Вышла новая серия!`,
+        color: 0xff69b4,
+        image: {
+            url: episode.image
+        },
+        footer: {
+            text: "🌸 Kibato Anime"
         }
-
     };
 
-
-
-    if(episode.image){
-
-        embed.thumbnail={
-            url:
-            episode.image
-        };
-
-    }
-
-
-
-    let tries = 0;
-
-
-    while(tries < 5){
-
-
-        const response =
-        await axios.post(
-            webhook,
+    const payload = {
+        embeds: [embed],
+        components: [
             {
-                embeds:[
-                    embed
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        style: 5,
+                        label: "▶ Смотреть на JUT-SU",
+                        url: episode.url
+                    }
                 ]
-            },
+            }
+        ]
+    };
+
+    while (true) {
+
+        const response = await axios.post(
+            webhook,
+            payload,
             {
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
-                validateStatus:
-                ()=>true
+                validateStatus: () => true
             }
         );
 
+        if (response.status === 204) {
 
-
-        if(response.status === 204){
-
-            console.log(
-                "✅ Отправлено в Discord:",
-                episode.title
-            );
-
-            await sleep(1500);
-
+            console.log("✅ Отправлено в Discord:", episode.title);
             return;
-
         }
 
-
-
-        if(response.status === 429){
+        if (response.status === 429) {
 
             const wait =
-            response.data.retry_after * 1000 || 3000;
-
+                (response.data.retry_after || 1) * 1000;
 
             console.log(
-                "⏳ Discord лимит, ждём:",
-                wait
+                `⏳ Discord ограничил запросы. Ждем ${wait} мс`
             );
 
-
-            await sleep(wait);
-
-            tries++;
+            await new Promise(r => setTimeout(r, wait));
 
             continue;
-
         }
 
+        console.log(response.data);
 
-
-        console.log(
-            response.data
-        );
-
-
-        throw new Error(
-            `Discord ошибка: ${response.status}`
-        );
-
-
+        throw new Error(`Discord ошибка ${response.status}`);
     }
-
 
 }
