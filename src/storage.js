@@ -4,7 +4,6 @@ import fs from "fs";
 const FILE = "./sent.json";
 
 
-
 function load(){
 
     if(!fs.existsSync(FILE)){
@@ -22,7 +21,12 @@ function load(){
         );
 
     }
-    catch{
+    catch(error){
+
+        console.log(
+            "Ошибка чтения storage:",
+            error.message
+        );
 
         return {};
 
@@ -68,5 +72,12 @@ export function updateEpisode(title, episode){
 
 
     save(data);
+
+
+    console.log(
+        "💾 Сохранено:",
+        title,
+        episode
+    );
 
 }
