@@ -1,79 +1,57 @@
 import * as cheerio from "cheerio";
 
-const BASE_URL = "https://jut-su.net";
-
-const PAGES = [
-    "/"
-];
-
+const BASE = "https://jut-su.net";
+const ONGOING_URL = "https://jut-su.net/ongoing/";
 
 export async function getNewEpisodes() {
 
-    console.log("🔎 Проверяем Jut-su обновления");
+    console.log("🔎 Проверяем Jut-su онгоинги");
+
+    const html = await fetchPage(ONGOING_URL);
+
+    const $ = cheerio.load(html);
+
+    const anime = [];
 
 
-    const links = new Set();
+    $("a[href$='.html']").each((_, el)=>{
+
+        const link = $(el).attr("href");
+        const title = $(el).text().trim();
 
 
-    for (const page of PAGES) {
-
-        try {
-
-            const html =
-                await fetchPage(
-                    BASE_URL + page
-                );
-
-
-           const $ =
-    cheerio.load(html);
-
-console.log(
-    $("body")
-        .text()
-        .replace(/\s+/g, " ")
-        .slice(0,3000)
-);
+        if(
+            !link ||
+            !title ||
+            title.length < 2
+        ){
+            return;
+        }
 
 
-           $(".shortstory, .th-item, .item, article").each(
-                (_, el)=>{
-
-                    const href =
-                        $(el).attr("href");
-
-
-                    if(
-                        href &&
-                        !href.includes("/page/")
-                    ){
-
-                        links.add(
-                            normalizeUrl(href)
-                        );
-
-                    }
-
-                }
-            );
+        const url =
+            link.startsWith("http")
+            ? link
+            : BASE + link;
 
 
-        } catch(e){
+        if(
+            !anime.find(x=>x.url===url)
+        ){
 
-            console.log(
-                "Ошибка страницы",
-                page,
-                e.message
-            );
+            anime.push({
+                title,
+                url
+            });
 
         }
 
-    }
+    });
 
 
     console.log(
-        "Найдено аниме:",
-        links.size
+        "Найдено онгоингов:",
+        anime.length
     );
 
 
@@ -81,20 +59,18 @@ console.log(
 
 
     for(
-        const url of [...links].slice(0,80)
+        const item of anime.slice(0,50)
     ){
 
         try {
 
-            const anime =
-                await parseAnime(url);
+            const episode =
+                await parseAnime(item);
 
 
-            if(anime){
+            if(episode){
 
-                episodes.push(
-                    anime
-                );
+                episodes.push(episode);
 
             }
 
@@ -103,7 +79,7 @@ console.log(
 
             console.log(
                 "Ошибка:",
-                url
+                item.title
             );
 
         }
@@ -112,49 +88,30 @@ console.log(
 
 
     console.log(
-        "Найдено новых:",
+        "Найдено серий:",
         episodes.length
     );
 
 
-    return episodes.slice(0,10);
+    return episodes;
 
 }
 
 
 
-
-async function parseAnime(url){
+async function parseAnime(item){
 
 
     const html =
-        await fetchPage(url);
+        await fetchPage(item.url);
 
 
     const $ =
         cheerio.load(html);
-console.log(
-    $("body").text().slice(0,2000)
-);
-
-
-    const title =
-        $("h1")
-        .first()
-        .text()
-        .trim();
 
 
 
-    if(!title){
-
-        return null;
-
-    }
-
-
-
-    const body =
+    const text =
         $("body")
         .text()
         .replace(/\s+/g," ")
@@ -163,13 +120,11 @@ console.log(
 
 
     const episode =
-        getLastEpisode(body);
+        findEpisode(text);
 
 
 
-    if(
-        episode === null
-    ){
+    if(!episode){
 
         return null;
 
@@ -177,40 +132,26 @@ console.log(
 
 
 
-    const updated =
-    getUpdateDate(body);
-
-console.log(
-    "Проверяем:",
-    title,
-    "серия:",
-    episode,
-    "дата:",
-    updated
-);
-
-
-
-    const image =
-        $("img")
-        .first()
-        .attr("src");
-
-
-
     return {
 
-        title,
+        title:
+            cleanTitle(item.title),
+
 
         episode,
 
+
         voice:
-            findVoice(body),
+            findVoice(text),
+
 
         image:
-            normalizeImage(image),
+            getImage($),
 
-        url,
+
+        url:
+            item.url,
+
 
         description:
             "🔥 Новая серия появилась на JUT-SU"
@@ -222,49 +163,29 @@ console.log(
 
 
 
-function getLastEpisode(text){
-
+function findEpisode(text){
 
     const matches =
         [
-            ...text.matchAll(
-                /(\d+)\s*(серия|эпизод)/gi
-            )
+            /(\d+)\s*серия/i,
+            /серия\s*(\d+)/i
         ];
 
 
-    if(
-        matches.length === 0
+
+    for(
+        const regex of matches
     ){
 
-        return null;
-
-    }
-
-
-    return matches[
-        matches.length - 1
-    ][1];
-
-}
+        const m =
+            text.match(regex);
 
 
+        if(m){
 
+            return m[1];
 
-function getUpdateDate(text){
-
-
-    const date =
-        text.match(
-            /\d{2}\.\d{2}\.\d{4}/
-        );
-
-
-    if(
-        date
-    ){
-
-        return date[0];
+        }
 
     }
 
@@ -275,33 +196,26 @@ function getUpdateDate(text){
 
 
 
-
 function findVoice(text){
 
-    const voices = [
-
+    const voices=[
         "AniLibria",
         "AniDUB",
-        "Jaskier",
+        "AniLibria.TV",
         "StudioBand",
-        "Dream Cast"
-
+        "Jaskier"
     ];
 
 
     for(
-        const voice of voices
+        const v of voices
     ){
 
         if(
-            text
-            .toLowerCase()
-            .includes(
-                voice.toLowerCase()
-            )
+            text.includes(v)
         ){
 
-            return voice;
+            return v;
 
         }
 
@@ -314,61 +228,26 @@ function findVoice(text){
 
 
 
+function getImage($){
 
-async function fetchPage(url){
+    let img =
+        $("meta[property='og:image']")
+        .attr("content");
 
-
-    const response =
-        await fetch(
-            url,
-            {
-                headers:{
-                    "User-Agent":
-                    "Mozilla/5.0 Kibato Anime"
-                }
-            }
-        );
-
-
-    if(
-        !response.ok
-    ){
-
-        throw new Error(
-            response.status
-        );
-
-    }
-
-
-    return response.text();
-
-}
-
-
-
-
-function normalizeUrl(url){
-
-    if(
-        url.startsWith("http")
-    ){
-
-        return url;
-
-    }
-
-
-    return BASE_URL + url;
-
-}
-
-
-
-
-function normalizeImage(img){
 
     if(!img){
+
+        img =
+        $("img")
+        .first()
+        .attr("src");
+
+    }
+
+
+    if(
+        !img
+    ){
 
         return null;
 
@@ -384,6 +263,45 @@ function normalizeImage(img){
     }
 
 
-    return BASE_URL + img;
+    return BASE + img;
+
+}
+
+
+
+function cleanTitle(title){
+
+    return title
+    .replace(/\s+/g," ")
+    .trim();
+
+}
+
+
+
+async function fetchPage(url){
+
+    const res =
+        await fetch(
+            url,
+            {
+                headers:{
+                    "User-Agent":
+                    "Mozilla/5.0 Kibato Anime Bot"
+                }
+            }
+        );
+
+
+    if(!res.ok){
+
+        throw new Error(
+            res.status
+        );
+
+    }
+
+
+    return await res.text();
 
 }
