@@ -2,60 +2,30 @@ import { getNewEpisodes } from "./jutsu.js";
 import { sendDiscordEpisode } from "./discord.js";
 import { getLastEpisode, updateEpisode } from "./storage.js";
 
+async function main() {
 
-async function main(){
+    console.log("🌸 Kibato Anime запуск");
 
-    console.log(
-        "🌸 Kibato Anime запуск"
-    );
+    const webhook = process.env.DISCORD_WEBHOOK;
 
-
-    const webhook =
-    process.env.DISCORD_WEBHOOK;
-
-
-    if(!webhook){
-
-        throw new Error(
-            "Нет DISCORD_WEBHOOK"
-        );
-
+    if (!webhook) {
+        throw new Error("Нет DISCORD_WEBHOOK");
     }
 
+    const episodes = await getNewEpisodes();
 
-
-    const episodes =
-    await getNewEpisodes();
-
-
-
-    console.log(
-        "Найдено серий:",
-        episodes.length
-    );
-
-
+    console.log("Найдено серий:", episodes.length);
 
     let sent = 0;
 
+    for (const episode of episodes) {
 
+        try {
 
-    for(
-        const episode of episodes
-    ){
+            // Используем URL как уникальный ID
+            const id = episode.url;
 
-        try{
-
-
-            const id =
-            episode.url;
-
-
-
-            const last =
-            getLastEpisode(id);
-
-
+            const last = getLastEpisode(id);
 
             console.log(
                 "Проверка:",
@@ -66,73 +36,56 @@ async function main(){
                 episode.episode
             );
 
+            if (episode.episode <= last) {
 
-
-            if(
-                episode.episode <= last
-            ){
-
-                console.log(
-                    "⏭ Пропуск:",
-                    episode.title
-                );
+                console.log("⏭ Пропуск:", episode.title);
 
                 continue;
-
             }
-
-
 
             await sendDiscordEpisode(
                 webhook,
                 episode
             );
 
-
-
             updateEpisode(
                 id,
                 episode.episode
             );
 
-
-
             sent++;
 
+            console.log(
+                "✅ Отправлено:",
+                episode.title,
+                episode.episode
+            );
 
-        }
-        catch(error){
+            // Чтобы не словить Discord Rate Limit
+            await new Promise(resolve =>
+                setTimeout(resolve, 1500)
+            );
+
+        } catch (error) {
 
             console.log(
-                "Ошибка:",
+                "❌ Ошибка:",
                 episode.title,
                 error.message
             );
 
         }
 
-
     }
 
-
-
-    console.log(
-        `🌸 Готово. Отправлено: ${sent}`
-    );
+    console.log(`🌸 Готово. Отправлено: ${sent}`);
 
 }
 
+main().catch(error => {
 
+    console.error("Ошибка:", error);
 
-main()
-.catch(
-    error=>{
+    process.exit(1);
 
-        console.error(
-            error
-        );
-
-        process.exit(1);
-
-    }
-);
+});
