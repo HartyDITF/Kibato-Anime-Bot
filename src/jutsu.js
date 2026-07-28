@@ -25,8 +25,15 @@ export async function getNewEpisodes() {
                 );
 
 
-            const $ =
-                cheerio.load(html);
+           const $ =
+    cheerio.load(html);
+
+console.log(
+    $("body")
+        .text()
+        .replace(/\s+/g, " ")
+        .slice(0,3000)
+);
 
 
            $(".shortstory, .th-item, .item, article").each(
