@@ -3,80 +3,43 @@ name: Kibato Anime Bot
 permissions:
   contents: write
 
-
 on:
-
   schedule:
-
     - cron: "*/30 * * * *"
-
-on:
-
-  schedule:
-
-    - cron: "*/30 * * * *"
-
 
   workflow_dispatch:
-
 
 
 jobs:
 
   run-bot:
 
-    runs-on:
-      ubuntu-latest
+    runs-on: ubuntu-latest
 
 
     steps:
 
-
-      - name:
-          📥 Скачать репозиторий
-
-        uses:
-          actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
 
-
-      - name:
-          🟢 Установить Node.js
-
-        uses:
-          actions/setup-node@v4
-
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-
-          node-version:
-            22
+          node-version: 22
 
 
-
-      - name:
-          📦 Установить зависимости
-
-        run:
-          npm install
+      - name: Install
+        run: npm install
 
 
-
-      - name:
-          🌸 Запустить Kibato Anime
-
+      - name: Run Kibato Anime
         env:
-
-          DISCORD_WEBHOOK:
-            ${{ secrets.DISCORD_WEBHOOK }}
-
-        run:
-
-          node src/index.js
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: node src/index.js
 
 
-
-      - name: 💾 Сохранить отправленные серии
-
+      - name: Save sent database
         run: |
 
           git config user.name "Kibato Anime Bot"
