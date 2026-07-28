@@ -173,23 +173,22 @@ async function parseAnime(url){
 
 
     const updated =
-        getUpdateDate(body);
+    getUpdateDate(body);
 
 
+/*
+  Старые страницы не отправляем.
+  Если дата не найдена,
+  пропускаем.
+*/
 
-    /*
-      Старые страницы не отправляем.
-      Если дата не найдена,
-      пропускаем.
-    */
+if(
+    !updated
+){
 
-    if(
-        !updated
-    ){
+    return null;
 
-        return null;
-
-    }
+}
 
 
 
