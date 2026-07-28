@@ -1,64 +1,41 @@
+import axios from "axios";
+
+
 export async function sendDiscordEpisode(
     webhook,
     episode
-) {
-
-    if (!webhook) {
-
-        throw new Error(
-            "DISCORD_WEBHOOK отсутствует"
-        );
-
-    }
+){
 
 
     const embed = {
+
 
         title:
         `🎬 ${episode.title} — ${episode.episode} серия`,
 
 
-       description:
-`🔥 Новая серия появилась на JUT-SU\n\n🎙 Озвучка: ${episode.voice || "Не указана"}`
-       
-           if(episode.image){
- embed.setThumbnail(episode.image);
-}
-           `
-🎙 Озвучка: **${episode.voice}**
-
-${episode.description || ""}
-        `,
+        description:
+        `🎙 Озвучка: ${episode.voice || "Не указана"}\n\n🔥 Новая серия появилась на JUT-SU`,
 
 
-        url:
-        episode.url,
+        color: 0xff69b4,
 
 
-        color:
-        16733696,
-
-
-        footer: {
-
+        footer:{
             text:
             "🌸 Kibato Anime"
-
         }
+
 
     };
 
 
 
-    if (
-        episode.image
-    ) {
+    if(episode.image){
 
         embed.thumbnail = {
-
             url:
             episode.image
-
         };
 
     }
@@ -66,82 +43,38 @@ ${episode.description || ""}
 
 
     const response =
-        await fetch(
-            webhook,
-            {
-
-                method:
-                "POST",
-
-
-                headers: {
-
-                    "Content-Type":
-                    "application/json"
-
-                },
-
-
-                body:
-                JSON.stringify({
-
-                    username:
-                    "Kibato Anime",
+    await axios.post(
+        webhook,
+        {
+            embeds:[
+                embed
+            ]
+        },
+        {
+            headers:{
+                "Content-Type":
+                "application/json"
+            },
+            validateStatus:
+            ()=>true
+        }
+    );
 
 
-                    embeds: [
-                        embed
-                    ],
 
+    if(response.status !== 204){
 
-                    components: [
-
-                        {
-
-                            type:
-                            1,
-
-
-                            components: [
-
-                                {
-
-                                    type:
-                                    2,
-
-                                    style:
-                                    5,
-
-                                    label:
-                                    "▶ Смотреть",
-
-                                    url:
-                                    episode.url
-
-                                }
-
-                            ]
-
-                        }
-
-                    ]
-
-                })
-
-            }
+        console.log(
+            response.data
         );
 
-
-
-    if (
-        !response.ok
-    ) {
 
         throw new Error(
             `Discord ошибка: ${response.status}`
         );
 
     }
+
 
 
     console.log(
