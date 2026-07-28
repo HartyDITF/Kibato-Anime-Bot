@@ -123,6 +123,14 @@ export async function getNewEpisodes() {
 
 
 
+            if(
+    anime.title.length < 3 ||
+    anime.title.includes("JUT-SU")
+){
+    continue;
+}
+
+
             /*
               Ищем номера серий
               в тексте страницы
