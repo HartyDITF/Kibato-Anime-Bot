@@ -39,7 +39,7 @@ jobs:
         run: node src/index.js
 
 
-            - name: Save sent database
+      - name: Save sent database
         run: |
 
           git config user.name "Kibato Anime Bot"
