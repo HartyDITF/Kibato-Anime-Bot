@@ -1,19 +1,12 @@
 import fs from "fs";
 
-
-const FILE =
-"./sent.json";
+const FILE = "./sent.json";
 
 
+function loadStorage() {
 
-function loadStorage(){
-
-    if(
-        !fs.existsSync(FILE)
-    ){
-
+    if (!fs.existsSync(FILE)) {
         return {};
-
     }
 
 
@@ -26,7 +19,6 @@ function loadStorage(){
             )
         );
 
-
     } catch {
 
         return {};
@@ -37,8 +29,7 @@ function loadStorage(){
 
 
 
-
-function saveStorage(data){
+function saveStorage(data) {
 
     fs.writeFileSync(
         FILE,
@@ -53,9 +44,7 @@ function saveStorage(data){
 
 
 
-
-export function wasSent(id){
-
+export function wasSent(id) {
 
     const data =
         loadStorage();
@@ -69,16 +58,14 @@ export function wasSent(id){
 
 
 
-
-export function markSent(id){
-
+export function markSent(id) {
 
     const data =
         loadStorage();
 
 
     data[id] =
-        Date.now();
+        new Date().toISOString();
 
 
     saveStorage(
