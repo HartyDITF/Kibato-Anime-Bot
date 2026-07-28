@@ -1,10 +1,15 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import fs from "fs";
+
+
+const BASE = "https://jut-su.net";
+
+
+export async function getNewEpisodes(){
 
 
 const html = await axios.get(
-"https://jut-su.net/ongoing",
+BASE+"/ongoing",
 {
 headers:{
 "User-Agent":"Mozilla/5.0"
@@ -14,11 +19,12 @@ headers:{
 
 
 
-const $=cheerio.load(html);
+const $ = cheerio.load(html);
 
 
 
-const img=$("img")
+const img =
+$("img")
 .filter((i,e)=>{
 
 return $(e)
@@ -31,7 +37,7 @@ return $(e)
 
 
 console.log(
-"Нашёл постер"
+"Нашёл постер:"
 );
 
 
@@ -63,3 +69,9 @@ console.log(
 console.log(
 img.parent().parent().toString()
 );
+
+
+
+return [];
+
+}
