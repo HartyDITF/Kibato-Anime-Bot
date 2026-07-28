@@ -45,6 +45,16 @@ export async function getNewEpisodes() {
             .replace("Озвучка:", "")
             .trim();
 
+        const rating = $(el)
+            .find(".jutsu-item__label-rating")
+            .text()
+            .trim();
+
+        const time = $(el)
+            .find(".jutsu-item__label-series")
+            .text()
+            .trim();
+
         const episode = Number(
             $(el)
                 .find(".upd2__newseries div")
@@ -52,18 +62,27 @@ export async function getNewEpisodes() {
                 .trim()
         );
 
-        if (!title || !episode)
+        if (!title || !href || !episode) {
             return;
+        }
 
         result.push({
-    title: item.title,
-    episode: item.episode,
-    voice: item.voice,
-    image: item.image,
-    url: item.url,
-    rating: item.rating,
-    time: item.time
-});
+            title,
+            episode,
+            voice,
+            rating,
+            time,
+
+            image: image
+                ? (image.startsWith("http")
+                    ? image
+                    : BASE + image)
+                : null,
+
+            url: href.startsWith("http")
+                ? href
+                : BASE + href
+        });
 
         console.log(
             "Новая серия:",
