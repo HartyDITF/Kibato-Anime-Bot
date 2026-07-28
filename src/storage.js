@@ -1,16 +1,18 @@
 import fs from "fs";
 
-const FILE = "./sent.json";
+
+const FILE="./sent.json";
 
 
-function loadStorage() {
 
-    if (!fs.existsSync(FILE)) {
+function load(){
+
+    if(!fs.existsSync(FILE)){
         return {};
     }
 
 
-    try {
+    try{
 
         return JSON.parse(
             fs.readFileSync(
@@ -19,7 +21,8 @@ function loadStorage() {
             )
         );
 
-    } catch {
+    }
+    catch{
 
         return {};
 
@@ -29,7 +32,8 @@ function loadStorage() {
 
 
 
-function saveStorage(data) {
+
+function save(data){
 
     fs.writeFileSync(
         FILE,
@@ -44,32 +48,33 @@ function saveStorage(data) {
 
 
 
-export function wasSent(id) {
+
+export function getLastEpisode(title){
+
 
     const data =
-        loadStorage();
+    load();
 
 
-    return Boolean(
-        data[id]
-    );
+    return data[title] || 0;
 
 }
 
 
 
-export function markSent(id) {
+
+export function updateEpisode(
+    title,
+    episode
+){
 
     const data =
-        loadStorage();
+    load();
 
 
-    data[id] =
-        new Date().toISOString();
+    data[title]=episode;
 
 
-    saveStorage(
-        data
-    );
+    save(data);
 
 }
