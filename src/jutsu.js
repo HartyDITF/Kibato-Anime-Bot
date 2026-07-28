@@ -118,6 +118,17 @@ async function parseAnime(item){
         .trim();
 
 
+    
+console.log(
+    "СТРАНИЦА:",
+    item.title
+);
+
+console.log(
+    text.slice(0,1500)
+);
+
+    
 
     const episode =
         findEpisode(text);
