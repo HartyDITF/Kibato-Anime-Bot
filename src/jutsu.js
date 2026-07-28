@@ -2,13 +2,9 @@ import * as cheerio from "cheerio";
 
 const BASE_URL = "https://jut-su.net";
 
-const PAGES = Array.from(
-    { length: 10 },
-    (_, i) =>
-        i === 0
-            ? "/anime/"
-            : `/anime/page/${i + 1}/`
-);
+const PAGES = [
+    "/"
+];
 
 
 export async function getNewEpisodes() {
@@ -33,7 +29,7 @@ export async function getNewEpisodes() {
                 cheerio.load(html);
 
 
-            $("a[href$='.html']").each(
+           $(".shortstory, .th-item, .item, article").each(
                 (_, el)=>{
 
                     const href =
@@ -130,7 +126,9 @@ async function parseAnime(url){
 
     const $ =
         cheerio.load(html);
-
+console.log(
+    $("body").text().slice(0,2000)
+);
 
 
     const title =
