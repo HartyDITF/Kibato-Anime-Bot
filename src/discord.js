@@ -7,6 +7,10 @@ export async function sendDiscordEpisode(webhook, episode) {
         description:
 `🎙 Озвучка: ${episode.voice}
 
+⭐ Рейтинг: ${episode.rating}
+
+🕒 ${episode.time}
+
 🔥 Вышла новая серия!`,
         color: 0xff69b4,
         image: {
