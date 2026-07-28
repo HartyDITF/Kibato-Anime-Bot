@@ -40,14 +40,14 @@ jobs:
 
 
       - name: Save sent database
-        run: |
+  run: |
 
-          git config user.name "Kibato Anime Bot"
+    git config user.name "Kibato Anime Bot"
 
-          git config user.email "kibato-bot@users.noreply.github.com"
+    git config user.email "kibato-bot@users.noreply.github.com"
 
-          git add sent.json || true
+    git add sent.json || true
 
-          git commit -m "Update sent episodes" || exit 0
+    git commit -m "Update sent episodes" || exit 0
 
-          git push
+    git push
