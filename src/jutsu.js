@@ -2,53 +2,67 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 
 
-const URL =
-    "https://jut-su.net/ongoing";
+const URL = "https://jut-su.net/ongoing";
 
 
-export async function getNewEpisodes() {
+async function getPage(url){
+
+    const {data} = await axios.get(url,{
+        headers:{
+            "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        },
+        timeout:20000
+    });
+
+    return data;
+}
+
+
+
+export async function getNewEpisodes(){
+
 
     console.log("🔎 Проверяем JUT-SU онгоинги");
 
 
-    const {data} = await axios.get(URL,{
-        headers:{
-            "User-Agent":
-            "Mozilla/5.0"
-        },
-        timeout:15000
-    });
+    const html =
+        await getPage(URL);
 
 
-    const $ = cheerio.load(data);
+    const $ =
+        cheerio.load(html);
 
 
-    const anime = [];
+
+    const animeLinks = new Map();
 
 
-    $(".shortstory").each((i,el)=>{
+
+    $("a").each((i,el)=>{
+
+
+        const href =
+            $(el).attr("href");
 
 
         const title =
-            $(el)
-            .find(".shortstorytitle")
-            .text()
+            $(el).text()
             .trim();
 
 
-        const link =
-            $(el)
-            .find("a")
-            .first()
-            .attr("href");
 
+        if(
+            href &&
+            href.includes("/anime/")
+            &&
+            title.length > 2
+        ){
 
-        if(title && link){
-
-            anime.push({
-                title,
-                link
-            });
+            animeLinks.set(
+                href,
+                title
+            );
 
         }
 
@@ -59,92 +73,118 @@ export async function getNewEpisodes() {
 
     console.log(
         "Найдено аниме:",
-        anime.length
+        animeLinks.size
     );
 
 
 
-    const episodes=[];
+    const result=[];
 
 
 
-    for(const item of anime){
+    for(
+        const [link,title]
+        of animeLinks
+    ){
 
 
         try{
 
 
             const page =
-            await axios.get(
-                item.link,
-                {
-                    headers:{
-                        "User-Agent":
-                        "Mozilla/5.0"
-                    }
-                }
-            );
+                await getPage(
+                    link.startsWith("http")
+                    ?
+                    link
+                    :
+                    "https://jut-su.net"+link
+                );
+
 
 
             const $$ =
-            cheerio.load(
-                page.data
-            );
+                cheerio.load(page);
 
 
 
-            const text =
-            $$
-            .text()
-            .replace(/\s+/g," ");
+            const body =
+                $$
+                .text()
+                .replace(/\s+/g," ");
 
 
 
-            const match =
-            text.match(
-                /(\d+)\s*серий/
-            );
+            let episode=null;
 
 
 
-            if(match){
-
-
-                const count =
-                Number(match[1]);
-
-
-                episodes.push({
-
-                    title:item.title,
-
-                    episode:count,
-
-                    voice:
-                    "JUT-SU",
-
-                    image:
-                    $$("meta[property='og:image']")
-                    .attr("content")
-
-                });
-
-
-                console.log(
-                    "Найдено:",
-                    item.title,
-                    count
+            const matches =
+                body.match(
+                    /\d+\s*сер(?:ия|ии|ий|ий)/gi
                 );
+
+
+
+            if(matches){
+
+                const nums =
+                    matches
+                    .map(x=>
+                        Number(
+                            x.match(/\d+/)[0]
+                        )
+                    )
+                    .filter(Boolean);
+
+
+                episode =
+                    Math.max(...nums);
 
             }
 
 
 
-        }catch(e){
+            if(episode){
+
+
+                const image =
+                    $$
+                    ("meta[property='og:image']")
+                    .attr("content");
+
+
+
+                console.log(
+                    "Найдена серия:",
+                    title,
+                    episode
+                );
+
+
+                result.push({
+
+                    title,
+
+                    episode,
+
+                    voice:
+                    "JUT-SU",
+
+                    image
+
+                });
+
+
+            }
+
+
+
+        }
+        catch(err){
 
             console.log(
-                "Ошибка страницы:",
-                item.title
+                "Ошибка:",
+                title
             );
 
         }
@@ -153,6 +193,7 @@ export async function getNewEpisodes() {
     }
 
 
-    return episodes;
+
+    return result;
 
 }
