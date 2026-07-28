@@ -44,21 +44,16 @@ async function main(){
         const episode of episodes
     ){
 
-
         try{
 
 
-            const last =
-           const id =
-episode.url;
+            const id =
+            episode.url;
+
+
 
             const last =
-getLastEpisode(id);
-
-            updateEpisode(
-episode.url,
-episode.episode
-);
+            getLastEpisode(id);
 
 
 
@@ -96,7 +91,7 @@ episode.episode
 
 
             updateEpisode(
-                episode.title,
+                id,
                 episode.episode
             );
 
@@ -105,17 +100,14 @@ episode.episode
             sent++;
 
 
-
         }
         catch(error){
-
 
             console.log(
                 "Ошибка:",
                 episode.title,
                 error.message
             );
-
 
         }
 
