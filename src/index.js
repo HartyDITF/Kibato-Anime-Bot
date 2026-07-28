@@ -79,7 +79,10 @@ if(
 
 
 
-            markSent(id);
+            updateEpisode(
+    episode.title,
+    episode.episode
+);
 
 
 
