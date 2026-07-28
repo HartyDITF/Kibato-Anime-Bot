@@ -42,110 +42,73 @@ cheerio.load(html);
 
 
 
-const anime = [];
+const anime=[];
 
 
 
-// ищем только блоки с постерами
-$("img").each((i,el)=>{
+$(".shortstory").each((i,el)=>{
 
 
-    const img =
-    $(el);
-
-
-
-    const src =
-    img.attr("src");
-
-
-    const alt =
-    img.attr("alt");
-
-
-
-    const parent =
-    img.closest("a");
-
+    const a =
+    $(el).find("a").first();
 
 
     const href =
-    parent.attr("href");
+    a.attr("href");
+
+
+    const title =
+    $(el)
+    .find("img")
+    .attr("alt");
+
+
+
+    const image =
+    $(el)
+    .find("img")
+    .attr("src");
 
 
 
     if(
-        !href ||
-        !src ||
-        !alt
-    )
-        return;
+        href &&
+        title &&
+        !title.includes("год")
+    ){
+
+        anime.push({
+
+            title,
+
+            href:
+            href.startsWith("http")
+            ?
+            href
+            :
+            BASE+href,
 
 
+            image:
+            image?.startsWith("http")
+            ?
+            image
+            :
+            BASE+image
 
-    // убираем мусор
-    if(
-        alt.length < 3 ||
-        alt.includes("JUT") ||
-        alt.includes("Все") ||
-        alt.includes("202")
-    )
-        return;
-
+        });
 
 
-    if(
-        !href.includes("/anime/")
-    )
-        return;
-
-
-
-    anime.push({
-
-        title: alt.trim(),
-
-        href:
-        href.startsWith("http")
-        ?
-        href
-        :
-        BASE + href,
-
-
-        image:
-        src.startsWith("http")
-        ?
-        src
-        :
-        BASE + src
-
-    });
+    }
 
 
 });
 
 
 
-// убираем дубли
-
-const unique =
-[
-...new Map(
-anime.map(
-x=>[
-x.href,
-x
-]
-)
-).values()
-];
-
-
-
 console.log(
 "Найдено аниме:",
-unique.length
+anime.length
 );
 
 
@@ -155,9 +118,8 @@ const result=[];
 
 
 for(
-const item of unique
+const item of anime.slice(0,30)
 ){
-
 
 try{
 
@@ -172,69 +134,51 @@ cheerio.load(page);
 
 
 
-const text =
-$$.text()
-.replace(
-(/\s+/g),
-" "
+let episode = null;
+
+
+
+$$("a").each((i,el)=>{
+
+
+const txt =
+$$(el).text()
+.trim();
+
+
+
+const m =
+txt.match(
+/(\d+)\s*серия/
 );
 
 
 
-/*
-ищем:
-12 серий
-24 серии
-1171 серия
-*/
+if(m){
 
-const match =
-text.match(
-/(\d+)\s*(серий|серия|эпизодов)/
+episode =
+Math.max(
+episode || 0,
+Number(m[1])
 );
-
-
-
-if(!match)
-continue;
-
-
-
-const episode =
-Number(match[1]);
-
-
-
-if(
-episode <= 0
-)
-continue;
-
-
-
-// озвучка
-
-let voice =
-"Не указана";
-
-
-const voiceMatch =
-text.match(
-/Озвучка от:\s*([^]+?)Тип/
-);
-
-
-
-if(
-voiceMatch
-){
-
-voice =
-voiceMatch[1]
-.trim()
-.replace(/\s+/g," ");
 
 }
+
+
+});
+
+
+
+if(!episode)
+continue;
+
+
+
+console.log(
+"Серия:",
+item.title,
+episode
+);
 
 
 
@@ -244,28 +188,18 @@ title:item.title,
 
 episode,
 
-voice,
+voice:"JUT-SU",
 
 image:item.image
 
 });
 
 
-
-console.log(
-"Найдено:",
-item.title,
-episode
-);
-
-
-
 }
-
 catch(e){
 
 console.log(
-"Ошибка страницы:",
+"Ошибка:",
 item.title
 );
 
@@ -277,5 +211,6 @@ item.title
 
 
 return result;
+
 
 }
