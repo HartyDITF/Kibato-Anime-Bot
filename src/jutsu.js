@@ -1,145 +1,118 @@
 import * as cheerio from "cheerio";
 
+const BASE_URL = "https://jut-su.net";
 
-const BASE =
-"https://jut-su.net";
-
-
-const LIST =
-"https://jut-su.net/anime/";
-
-
-export async function getNewEpisodes(){
+const PAGES = [
+    "/anime/",
+    "/anime/page/2/",
+    "/anime/page/3/"
+];
 
 
-console.log(
-"🔎 Проверяем Jut-su"
-);
+export async function getNewEpisodes() {
+
+    console.log("🔎 Проверяем Jut-su обновления");
 
 
-
-const html =
-await getPage(LIST);
+    const animeLinks = new Set();
 
 
+    for (const page of PAGES) {
 
-const $ =
-cheerio.load(html);
+        try {
+
+            const html = await fetchPage(
+                BASE_URL + page
+            );
+
+            const $ = cheerio.load(html);
 
 
+            $("a[href$='.html']").each(
+                (_, el)=>{
 
-const links=[];
+                    const href =
+                        $(el).attr("href");
 
 
-console.log("Проверяем ссылки");
+                    if (
+                        href &&
+                        !href.includes("/page/")
+                    ){
+
+                        animeLinks.add(
+                            normalizeUrl(href)
+                        );
+
+                    }
+
+                }
+            );
 
 
-$(".grid-items a")
-.slice(0,30)
-.each((i,el)=>{
+        } catch(error){
+
+            console.log(
+                "Ошибка страницы:",
+                page,
+                error.message
+            );
+
+        }
+
+    }
+
 
     console.log(
-        i,
-        $(el).attr("href"),
-        $(el).text().trim()
+        "Найдено аниме:",
+        animeLinks.size
     );
 
-});
+
+    const result = [];
 
 
-$(".grid-items a")
-.each(
-(_,el)=>{
+    for (
+        const url of [...animeLinks].slice(0,30)
+    ){
+
+        try {
 
 
-const href =
-$(el).attr("href");
+            const episode =
+                await parseAnime(url);
 
 
-if(
-!href
-) return;
+            if(episode){
+
+                result.push(
+                    episode
+                );
+
+            }
 
 
+        }catch(error){
 
-const url =
-fixUrl(href);
+            console.log(
+                "Ошибка аниме:",
+                url
+            );
 
+        }
 
-
-if(
-url &&
-isAnimePage(url)
-){
-
-links.push(url);
-
-}
+    }
 
 
-}
-);
+    console.log(
+        "Найдено серий:",
+        result.length
+    );
 
 
-
-const unique =
-[...new Set(links)]
-.slice(
-0,
-10
-);
-
-
-
-const episodes=[];
-
-
-
-for(
-const url of unique
-){
-
-
-try{
-
-
-const data =
-await parseAnime(url);
-
-
-if(data){
-
-episodes.push(data);
+    return result;
 
 }
-
-
-}catch(e){
-
-console.log(
-"Ошибка:",
-url
-);
-
-}
-
-
-}
-
-
-
-console.log(
-"Найдено:",
-episodes.length
-);
-
-
-
-return episodes;
-
-
-}
-
 
 
 
@@ -147,76 +120,85 @@ return episodes;
 async function parseAnime(url){
 
 
-const html =
-await getPage(url);
+    const html =
+        await fetchPage(url);
+
+
+    const $ =
+        cheerio.load(html);
 
 
 
-const $ =
-cheerio.load(html);
+    let title =
+        $("h1")
+        .first()
+        .text()
+        .trim();
 
 
 
-const title =
-$("h1, .anime-title")
-.first()
-.text()
-.trim();
+    if(!title){
+
+        return null;
+
+    }
 
 
 
-if(!title)
-return null;
+    const text =
+        $("body")
+        .text()
+        .replace(/\s+/g," ")
+        .trim();
 
 
 
-const text =
-$("body")
-.text()
-.replace(
-(/\s+/g),
-" "
-);
+    const episode =
+        findEpisode(text);
 
 
 
-const image =
-$("img")
-.first()
-.attr("src");
+    if(
+        episode === "?"
+    ){
+
+        return null;
+
+    }
 
 
 
-return {
+    const image =
+        $("img")
+        .first()
+        .attr("src");
 
 
-title,
+
+    return {
+
+        title,
+
+        episode,
+
+        voice:
+            findVoice(text),
 
 
-episode:
-findEpisode(text),
+        image:
+            normalizeImage(image),
 
 
-voice:
-findVoice(text),
+        url,
 
 
-url,
+        description:
+            "Новая серия доступна на JUT-SU"
 
-
-image:
-fixUrl(image),
-
-
-description:
-`Новая серия доступна на JUT-SU`
-
-
-};
+    };
 
 
 }
-
 
 
 
@@ -224,30 +206,29 @@ description:
 function findEpisode(text){
 
 
-const match =
-text.match(
-/(\d+)\s*сер(ия|ии|ий)/i
-);
+    const matches =
+        [
+            ...text.matchAll(
+                /(\d+)\s*(серия|эпизод)/gi
+            )
+        ];
 
 
-if(match)
-return match[1];
+    if(
+        matches.length === 0
+    ){
+
+        return "?";
+
+    }
 
 
-const total =
-text.match(
-/(\d+)\s*серии/i
-);
-
-
-return total
-?
-total[1]
-:
-"?";
-
+    return matches[
+        matches.length - 1
+    ][1];
 
 }
+
 
 
 
@@ -255,73 +236,68 @@ total[1]
 function findVoice(text){
 
 
-const voices=[
+    const voices = [
 
-"AniLibria",
-"AniDUB",
-"AnimeVost",
-"Jaskier",
-"SHIZA Project"
+        "AniLibria",
+        "AniDUB",
+        "Jaskier",
+        "StudioBand",
+        "Dream Cast"
 
-];
-
-
-for(
-const v of voices
-){
-
-if(
-text.includes(v)
-)
-return v;
+    ];
 
 
-}
+    for(
+        const voice of voices
+    ){
+
+        if(
+            text
+            .toLowerCase()
+            .includes(
+                voice.toLowerCase()
+            )
+        ){
+
+            return voice;
+
+        }
+
+    }
 
 
-return "Не указана";
-
-}
-
-
-
-
-
-async function getPage(url){
-
-
-const response =
-await fetch(
-url,
-{
-
-headers:{
-
-"User-Agent":
-"Mozilla/5.0 Chrome/120",
-
-"Accept":
-"text/html"
-
-}
-
-}
-);
-
-
-
-if(!response.ok){
-
-throw new Error(
-response.status
-);
+    return "Не указана";
 
 }
 
 
 
-return await response.text();
 
+async function fetchPage(url){
+
+
+    const response =
+        await fetch(
+            url,
+            {
+                headers:{
+                    "User-Agent":
+                    "Mozilla/5.0 Kibato Anime Bot"
+                }
+            }
+        );
+
+
+    if(!response.ok){
+
+        throw new Error(
+            response.status
+        );
+
+    }
+
+
+    return await response.text();
 
 }
 
@@ -329,36 +305,50 @@ return await response.text();
 
 
 
-function fixUrl(url){
-
-if(!url)
-return null;
+function normalizeUrl(url){
 
 
-if(
-url.startsWith("http")
-){
+    if(
+        url.startsWith("http")
+    ){
 
-return url;
+        return url;
 
-}
+    }
 
-
-return BASE + "/" + url.replace(
-/^\//,
-""
-);
-
-}
-
-
-
-function isAnimePage(url){
 
     return (
-        url.includes("jut-su.net/") &&
-        url.endsWith(".html") &&
-        !url.includes("/page/")
+        BASE_URL +
+        url
+    );
+
+}
+
+
+
+
+function normalizeImage(img){
+
+
+    if(!img){
+
+        return null;
+
+    }
+
+
+    if(
+        img.startsWith("http")
+    ){
+
+        return img;
+
+    }
+
+
+    return (
+        BASE_URL +
+        img
     );
 
 }
